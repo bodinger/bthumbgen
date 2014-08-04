@@ -1,0 +1,25 @@
+body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: Arial, Verdana, Helvetica, Geneva, sans-serif;
+}
+
+.table {
+    width: 100%;
+    clear: both;
+    float: none;
+}
+
+.table .row {
+    clear: both;
+    float: none;
+}
+
+.table .row .column {
+    float: left;
+}
+
+.table .row .column .image {
+    border: 1px;
+    text-align: center;
+}
