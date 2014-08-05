@@ -1,0 +1,1 @@
+<a href="?d=%s" class="%s">%s</a>

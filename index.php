@@ -1,23 +1,53 @@
 <?php
 require 'lib/mtmd/classes/utils.php';
 require 'lib/mtmd/models/image.php';
+require 'lib/mtmd/models/folder.php';
 require 'lib/mtmd/classes/imageApi.php';
 require 'lib/mtmd/classes/viewApi.php';
 require 'lib/mtmd/classes/imageView.php';
 
-$srcFolder = './images';
+$srcFolder = '';
+$srcDefault = './images';
 $cacheFolder = './cache';
 
-$imageApi = new mtmdImageApi($srcFolder, $cacheFolder);
+$options = getopt('d:');
+if (isset($_GET['d']) || isset($options['d'])) {
+    if (!empty($options['d'])) {
+        $srcFolder = $srcDefault.DIRECTORY_SEPARATOR.$options['d'];
+    }
+    if (!empty($_GET['d'])) {
+        $srcFolder = $srcDefault.DIRECTORY_SEPARATOR.$_GET['d'];
+    }
+}
+
+if (empty($srcFolder)) {
+    $srcFolder = $srcDefault;
+}
+
+$srcFolder = rtrim($srcFolder, DIRECTORY_SEPARATOR);
+
+$imageApi = new mtmdImageApi($srcFolder, $cacheFolder, $srcDefault);
 $images = $imageApi->getNewList();
 $imageApi
-    ->setThumbWidth(200)
-    ->setThumbHeight(150)
+    ->setThumbWidth(320)
+    ->setThumbHeight(260)
     ->resize($images);
 
 $tpl = new mtmdImageView();
-foreach ($imageApi->getList() as $image) {
-    $tpl->addImage($image);
+
+if ($srcFolder != $srcDefault) {
+    $root = new mtmdFolder('', $srcDefault, 'Overview', $srcDefault);
+    $tpl->addItem($root);
 }
-$imageTable = $tpl->renderImages();
-echo $tpl->render('<title>Images in '.$srcFolder.': '.count($images).'</title>', $imageTable);
+
+foreach ($imageApi->getList() as $item) {
+    $tpl->addItem($item);
+}
+$imageTable = $tpl->renderOverview();
+$headline = 'Showing "'.str_replace($srcDefault.DIRECTORY_SEPARATOR, '', $srcFolder).'" ('.count($images).' items)';
+
+$breadcrumb = $tpl->renderBreadCrumb(
+    substr($imageApi->getFolderSource(), 2),
+    'All'
+);
+echo $tpl->render('<title>'.$headline.'</title>', '<h1>'.$headline.'</h1>'."\n".$breadcrumb."\n".$imageTable);

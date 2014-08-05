@@ -1,2 +1,4 @@
 .idea
 cache/*
+images/*
+*.DS_Store*

@@ -12,6 +12,7 @@ class mtmdImageApi {
 
     /** @var string Source folder. */
     protected $folderSrc = '';
+    protected $folderRoot = '';
 
     /** @var string Cache folder */
     protected $folderCache = '';
@@ -31,9 +32,10 @@ class mtmdImageApi {
      * @param string $srcFolder   Source folder
      * @param string $cacheFolder Cache folder
      */
-    public function __construct($srcFolder, $cacheFolder)
+    public function __construct($srcFolder, $cacheFolder, $root)
     {
         $this->folderSrc = $srcFolder;
+        $this->folderRoot = $root;
         $this->folderCache = $cacheFolder;
         $this->initialize();
 
@@ -52,7 +54,7 @@ class mtmdImageApi {
         }
 
         if ( !is_dir($this->folderSrc) || !is_dir($this->folderCache) ) {
-            mtmdUtils::mkDir($this->folderSrc);
+            mtmdUtils::output($this->folderCache);
             mtmdUtils::mkDir($this->folderCache);
         }
 
@@ -60,9 +62,9 @@ class mtmdImageApi {
 
 
     /**
-     * Gets a list of image objects.
+     * Gets a list of image objects and writes it to class property for later usage.
      *
-     * @param int          $source Source type (images/cache)
+     * @param int $source Source type (images/cache)
      *
      * @return mtmdImage[] Array of mtmdImage instances.
      */
@@ -76,7 +78,21 @@ class mtmdImageApi {
         // Get file list and determine image info.
         $files = mtmdUtils::listDir($folder, true);
         $this->fileList = array();
+
+        $processedFolders = array();
+
         foreach ($files as $file) {
+            $relFolderPath = $this->extractRelativeFolderPath($folder, $file);
+            if (in_array($relFolderPath, $processedFolders)) {
+                continue;
+            }
+            if ($this->isInSubFolder($folder, $file) === true) {
+                $folderItem = new mtmdFolder($relFolderPath, $folder, '', $this->getFolderRoot());
+                array_push($this->fileList, $folderItem);
+                array_push($processedFolders, $relFolderPath);
+                continue;
+            }
+
             $image = new mtmdImage($file);
 
             // Remove invalid/unsupported images here.
@@ -91,10 +107,29 @@ class mtmdImageApi {
                 continue;
             }
 
+
             array_push($this->fileList, $image);
         }
 
         return $this->fileList;
+
+    }
+
+
+    public function extractRelativeFolderPath($folder, $fileName)
+    {
+        return dirname(str_replace($folder.DIRECTORY_SEPARATOR, '', $fileName));
+
+    }
+
+
+    public function isInSubFolder($folder, $fileName)
+    {
+        $dirName = $this->extractRelativeFolderPath($folder, $fileName);
+        if ($dirName == '.') {
+            return false;
+        }
+        return true;
 
     }
 
@@ -131,10 +166,41 @@ class mtmdImageApi {
     }
 
 
+    public function getFolderRoot()
+    {
+        return $this->folderRoot;
+    }
+
+
+    public function getFolderSource()
+    {
+        return $this->folderSrc;
+    }
+
+
+    public function getFolderCache()
+    {
+        return $this->folderCache;
+    }
+
+
+    public function getSourceFullPath()
+    {
+        return $this->getFolderRoot().DIRECTORY_SEPARATOR.$this->getFolderSource();
+    }
+
+
+    /**
+     * Returns the path to cached file.
+     *
+     * @param string $fileName
+     *
+     * @return string
+     */
     public function getCachedFilePath($fileName)
     {
         $targetPath = dirname($fileName).DIRECTORY_SEPARATOR.basename($fileName);
-        $targetPath = str_replace($this->folderSrc, $this->folderCache, $targetPath);
+        $targetPath = str_replace($this->getFolderRoot(), $this->getFolderCache(), $targetPath);
         return $targetPath;
     }
 
@@ -153,17 +219,19 @@ class mtmdImageApi {
                 continue;
             }
 
-
             mtmdUtils::output(
                 sprintf(
-                    '"%s": Resizing to %dx%d...',
-                    basename($image->getFileName()),
+                    '"%s": Resizing to %dx%d (was %dx%d)...',
+                    $image->getFileName(),
                     $this->getThumbWidth(),
-                    $this->getThumbHeight()
+                    $this->getThumbHeight(),
+                    $image->getWidth(),
+                    $image->getHeight()
                 )
             );
 
             $targetPath = $this->getCachedFilePath(dirname($image->getFileName()));
+
             // Prepare target dirs.
             mtmdUtils::mkDir($targetPath, 0755, true);
             // Resize image.

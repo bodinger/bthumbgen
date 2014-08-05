@@ -4,6 +4,12 @@ body {
     font-family: Arial, Verdana, Helvetica, Geneva, sans-serif;
 }
 
+h1 {
+    font-size: 1.5em;
+    font-weight: normal;
+    font-style: italic;
+}
+
 .table {
     width: 100%;
     clear: both;
@@ -38,11 +44,31 @@ body {
     display: block;
 }
 
-.imagecontainer span.title {
+.imagecontainer span.title, .imagecontainer span.size {
     font-size: 0.9em;
 }
 
 a.download:link, a.download:active, a.download:visited, a.download:hover {
-    color: #ff0000;
+    color: #ff9999;
     font-weight: bold;
+}
+
+.folder span.title {
+    font-weight: bold;
+}
+
+.breadcrumb {
+    display: block;
+    clear: both;
+}
+
+.breadcrumb a {
+    font-size: .8em;
+    float: left;
+    margin: 0px 10px 0px 0px;
+}
+
+.breadcrumb a:active {
+    font-weight: bold;
+    color: #ff0000;
 }

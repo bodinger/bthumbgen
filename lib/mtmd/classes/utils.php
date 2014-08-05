@@ -37,7 +37,8 @@ class mtmdUtils {
      */
     public static function mkDir($path, $recursive = false, $permissions = 0777)
     {
-        if ($recursive === false) {
+        if ($recursive === false && !file_exists($path)) {
+            mtmdUtils::output($path);
             mkdir($path);
         }
         $parts = explode(DIRECTORY_SEPARATOR, $path);
@@ -62,8 +63,12 @@ class mtmdUtils {
      */
     public static function listDir($dir, $recursive = true)
     {
-        $dirHandle = opendir($dir);
         $retArr = array();
+        if (!file_exists($dir)) {
+            return $retArr;
+        }
+
+        $dirHandle = opendir($dir);
         while (false !== ($entry = readdir($dirHandle))) {
             if (in_array($entry, self::$excludeFiles)) {
                 continue;
@@ -79,8 +84,28 @@ class mtmdUtils {
             array_push($retArr, $fullPath);
         }
 
+        closedir($dirHandle);
+
+        sort($retArr);
 
         return $retArr;
+    }
+
+
+    /**
+     * Format bytes.
+     *
+     * @param int $bytes
+     * @param int $precision
+     *
+     * @return string
+     */
+    public static function formatBytes($bytes, $precision = 2) {
+        $base     = log($bytes) / log(1024);
+        $suffixes = array('', ' kB', ' MB', ' GB', ' TB');
+
+        return round(pow(1024, $base - floor($base)), $precision) . $suffixes[floor($base)];
+
     }
 
 
