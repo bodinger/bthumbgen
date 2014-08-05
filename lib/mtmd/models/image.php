@@ -322,8 +322,9 @@ class mtmdImage {
         $this->thumbWidth    = $measures[0];
         $this->thumbHeight   = $measures[1];
 
+        // Once file is there don't generate it again.
         if (file_exists($cacheFile)) {
-         #   return;
+            return;
         }
 
         $oldFile = $this->createImage();
