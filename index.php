@@ -11,8 +11,8 @@ $cacheFolder = './cache';
 $imageApi = new mtmdImageApi($srcFolder, $cacheFolder);
 $images = $imageApi->getNewList();
 $imageApi
-    ->setThumbWidth(400)
-    ->setThumbHeight(300)
+    ->setThumbWidth(200)
+    ->setThumbHeight(150)
     ->resize($images);
 
 $tpl = new mtmdImageView();

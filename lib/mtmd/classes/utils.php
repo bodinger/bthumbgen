@@ -22,7 +22,7 @@ class mtmdUtils {
 
     public static function output($string)
     {
-        echo $string."\n";
+        echo "<!--".$string."-->\n";
     }
 
 

@@ -23,3 +23,26 @@ body {
     border: 1px;
     text-align: center;
 }
+
+.imagecontainer {
+    border-width: 1px;
+    margin: 1px 1px 1px 1px;
+    border-style: solid;
+    border-color: #ffffff;
+    text-align: center;
+}
+
+.imagecontainer span.number {
+    clear: both;
+    font-size: 0.7em;
+    display: block;
+}
+
+.imagecontainer span.title {
+    font-size: 0.9em;
+}
+
+a.download:link, a.download:active, a.download:visited, a.download:hover {
+    color: #ff0000;
+    font-weight: bold;
+}

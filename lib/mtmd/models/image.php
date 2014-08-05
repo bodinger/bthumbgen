@@ -15,6 +15,8 @@ class mtmdImage {
     protected $channels = 0;
     protected $format = null;
     protected $thumbFileName = '';
+    protected $thumbWidth = 0;
+    protected $thumbHeight = 0;
 
     public function __construct($file)
     {
@@ -114,6 +116,16 @@ class mtmdImage {
     {
         return $this->thumbFileName;
     }
+    
+    public function getThumbWidth()
+    {
+        return $this->thumbWidth;
+    }
+
+    public function getThumbHeight()
+    {
+        return $this->thumbHeight;
+    }
 
 
     public function determineFormat()
@@ -141,7 +153,16 @@ class mtmdImage {
 
     public function resizeImage($dstPath, $width, $height)
     {
+        $cacheFile = $dstPath.DIRECTORY_SEPARATOR.basename($this->getFileName());
         $measures = $this->getNewMeasures($width, $height);
+        
+        $this->thumbFileName = $cacheFile;
+        $this->thumbWidth    = $measures[0];
+        $this->thumbHeight   = $measures[1];
+
+        if (file_exists($cacheFile)) {
+         #   return;
+        }
 
         $newFile = imagecreatetruecolor($measures[0], $measures[1]);
         imagecopyresampled(
@@ -182,7 +203,6 @@ class mtmdImage {
     private function saveImage($newFile, $dstPath)
     {
         $dstPath = $dstPath.DIRECTORY_SEPARATOR.basename($this->getFileName());
-        $this->thumbFileName = $dstPath;
 
         switch($this->getType()) {
             case IMAGETYPE_JPEG:
