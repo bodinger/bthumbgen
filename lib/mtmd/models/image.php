@@ -98,8 +98,9 @@ class mtmdImage {
      */
     private function rotateOrFlip($imageResource)
     {
+        $retResource = $imageResource;
         if (!array_key_exists('Orientation', $this->exifData)) {
-            return $imageResource;
+            return $retResource;
         }
 
         switch ($this->exifData['Orientation']) {
@@ -109,7 +110,7 @@ class mtmdImage {
                 break;
             case self::ORIENTATION_ROTATE_180_LEFT:
                 $this->orientation = self::ORIENTATION_ROTATE_180_LEFT;
-                $imageResource = imagerotate($imageResource, 180, -1);
+                $retResource = imagerotate($imageResource, 180, -1);
                 break;
             case self::ORIENTATION_FLIP_VERTICAL:
                 $this->orientation = self::ORIENTATION_FLIP_VERTICAL;
@@ -118,25 +119,52 @@ class mtmdImage {
             case self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT:
                 $this->orientation = self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT;
                 $this->flip($imageResource);
-                $imageResource = imagerotate($imageResource, -90, -1);
+                $retResource = imagerotate($imageResource, -90, -1);
                 break;
             case self::ORIENTATION_ROTATE_90_RIGHT:
                 $this->orientation = self::ORIENTATION_ROTATE_90_RIGHT;
-                $imageResource = imagerotate($imageResource, -90, -1);
+                $retResource = imagerotate($imageResource, -90, -1);
                 break;
             case self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT:
                 $this->orientation = self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT;
                 $this->flip($imageResource);
-                $imageResource = imagerotate($imageResource, -90, -1);
+                $retResource = imagerotate($imageResource, -90, -1);
                 break;
             case self::ORIENTATION_ROTATE_90_LEFT:
                 $this->orientation = self::ORIENTATION_ROTATE_90_LEFT;
-                $imageResource = imagerotate($imageResource, 90, -1);
+                $retResource = imagerotate($imageResource, 90, -1);
                 break;
         }
 
-        return $imageResource;
+        if ($retResource === false) {
+            return $this->fixBrokenOrientation($imageResource);
+        }
+        return $retResource;
 
+    }
+
+
+    /**
+     * Fixes the orientation of some broken images. Those seem to be landscape but are portrait in reality.
+     *
+     * @param resource $imageResource
+     *
+     * @return resource
+     */
+    private function fixBrokenOrientation($imageResource) {
+        $oldWidth = $this->getWidth();
+        $oldHeight = $this->getHeight();
+        $oldThumbWidth = $this->getThumbWidth();
+        $oldThumbHeight = $this->getThumbHeight();
+        if ($oldWidth > $oldHeight) {
+            $this->width = $oldHeight;
+            $this->height = $oldWidth;
+            $this->orientation = self::ORIENTATION_ORIGINAL;
+            $this->format = self::PORTRAIT;
+            $this->thumbWidth = $oldThumbHeight;
+            $this->thumbHeight = $oldThumbWidth;
+        }
+        return $imageResource;
     }
 
 
@@ -332,9 +360,8 @@ class mtmdImage {
 
         // In case of orientation change determine correct measures.
         $this->setMeasuresByOrientation();
-
         $newFile = imagecreatetruecolor($this->getThumbWidth(), $this->getThumbHeight());
-
+        
         imagecopyresampled(
             $newFile,
             $oldFile,

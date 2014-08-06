@@ -104,7 +104,6 @@ class mtmdImageApi {
                 continue;
             }
 
-
             array_push($this->fileList, $image);
         }
 
