@@ -22,7 +22,7 @@ h1 {
 }
 
 .table .row .column {
-    float: left;
+    /*float: left;*/
 }
 
 .table .row .column .image {
@@ -48,9 +48,21 @@ h1 {
     font-size: 0.9em;
 }
 
-a.download:link, a.download:active, a.download:visited, a.download:hover {
+a:link, a:active, a:visited, a:hover, a.download:link, a.download:active, a.download:visited, a.download:hover {
     color: #ff9999;
     font-weight: bold;
+}
+
+.folder {
+    border-width: 1px;
+    margin: 1px 1px 1px 1px;
+    border-style: solid;
+    border-color: #ffffff;
+    text-align: center;
+}
+
+.folder a {
+    border: 0px solid white;
 }
 
 .folder span.title {

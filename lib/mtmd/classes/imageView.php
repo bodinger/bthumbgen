@@ -85,6 +85,7 @@ class mtmdImageView extends mtmdView {
             $folder->getPathFromRoot(),
             $folder->getTitle(),
             $folder->getFileCount(),
+            $folder->getPathFromRoot(),
             $folder->getTitle()
         );
 

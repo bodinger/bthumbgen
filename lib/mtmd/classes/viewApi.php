@@ -22,9 +22,9 @@ class mtmdView {
 
     public function renderTable($columns, array $contents)
     {
-        $tplTable = '<div class="table">%s</div>'."\n";
-        $tplRow   = '<div class="row">%s</div>'."\n";
-        $tplCol   = '<div class="column">%s</div>'."\n";
+        $tplTable = '<table class="table">%s</table>'."\n";
+        $tplRow   = '<tr class="row">%s</tr>'."\n";
+        $tplCol   = '<td class="column">%s</td>'."\n";
 
         $rows = '';
         $colArr = array();
