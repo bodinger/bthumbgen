@@ -76,20 +76,17 @@ class mtmdImageApi {
         }
 
         // Get file list and determine image info.
-        $files = mtmdUtils::listDir($folder, true);
+        $files = mtmdUtils::listDir($folder, false);
         $this->fileList = array();
-
-        $processedFolders = array();
 
         foreach ($files as $file) {
             $relFolderPath = $this->extractRelativeFolderPath($folder, $file);
-            if (in_array($relFolderPath, $processedFolders)) {
-                continue;
+            if (is_dir($file)) {
+                $relFolderPath = basename($file);
             }
-            if ($this->isInSubFolder($folder, $file) === true) {
+            if ($this->isInSubFolder($folder, $file) === true || is_dir($file)) {
                 $folderItem = new mtmdFolder($relFolderPath, $folder, '', $this->getFolderRoot());
                 array_push($this->fileList, $folderItem);
-                array_push($processedFolders, $relFolderPath);
                 continue;
             }
 

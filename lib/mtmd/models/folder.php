@@ -11,11 +11,11 @@ class mtmdFolder {
 
     public function __construct($path, $containerFolder = '', $title = '', $rootFolder = '')
     {
-        $this->path = $path;
+        $this->path            = $path;
         $this->folderContainer = $containerFolder;
-        $this->folderRoot = $rootFolder;
-        $this->fullPath = $this->getFolderContainer().DIRECTORY_SEPARATOR.$this->getPath();
-        $this->pathFromRoot = $this->getRelativePathFromRoot();
+        $this->folderRoot      = $rootFolder;
+        $this->fullPath        = $this->getFolderContainer().DIRECTORY_SEPARATOR.$this->getPath();
+        $this->pathFromRoot    = $this->getRelativePathFromRoot();
 
         if (!file_exists($this->fullPath)) {
             throw new Exception(
@@ -45,6 +45,12 @@ class mtmdFolder {
     }
 
 
+    private function cleanPath($string)
+    {
+        return rtrim($string, '.'.DIRECTORY_SEPARATOR);
+    }
+
+
     public function getTitle()
     {
         return $this->title;
@@ -53,31 +59,31 @@ class mtmdFolder {
 
     public function getPath()
     {
-        return $this->path;
+        return $this->cleanPath($this->path);
     }
 
 
     public function getFolderContainer()
     {
-        return $this->folderContainer;
+        return $this->cleanPath($this->folderContainer);
     }
 
 
     public function getFullPath()
     {
-        return $this->fullPath;
+        return $this->cleanPath($this->fullPath);
     }
 
 
     private function getRelativePathFromRoot()
     {
-        return trim(str_replace($this->folderRoot, '', $this->getFullPath()), DIRECTORY_SEPARATOR);
+        return $this->cleanPath(trim(str_replace($this->folderRoot, '', $this->getFullPath()), DIRECTORY_SEPARATOR));
     }
 
 
     public function getPathFromRoot()
     {
-        return $this->pathFromRoot;
+        return $this->cleanPath($this->pathFromRoot);
     }
 
 

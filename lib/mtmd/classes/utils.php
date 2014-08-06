@@ -68,6 +68,7 @@ class mtmdUtils {
             return $retArr;
         }
 
+        $dir = rtrim($dir, './');
         $dirHandle = opendir($dir);
         while (false !== ($entry = readdir($dirHandle))) {
             if (in_array($entry, self::$excludeFiles)) {
