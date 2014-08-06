@@ -137,7 +137,8 @@ class mtmdImage {
         }
 
         if ($retResource === false) {
-            return $this->fixBrokenOrientation($imageResource);
+            return $imageResource;
+            #return $this->fixBrokenOrientation($imageResource);
         }
         return $retResource;
 
