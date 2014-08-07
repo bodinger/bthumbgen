@@ -16,13 +16,17 @@ class mtmdUtils {
      */
     public static function dump($var)
     {
+        echo '<!--<pre>';
         var_dump($var);
+        echo '</pre>-->';
+
     }
 
 
     public static function output($string)
     {
         echo "<!--".$string."-->\n";
+
     }
 
 

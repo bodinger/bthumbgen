@@ -38,11 +38,16 @@ class mtmdImageView extends mtmdView {
     public function renderBreadcrumbItem($link, $title, $active)
     {
         $tpl = file_get_contents('lib/mtmd/templates/breadcrumbitem.html.tpl');
+        $class = '';
+        if ($active === true) {
+            $class = 'active';
+        }
         return sprintf(
             $tpl,
             rtrim($link, DIRECTORY_SEPARATOR),
-            ($active === true) ? 'active' : '',
-            rtrim($title, DIRECTORY_SEPARATOR)
+            $class,
+            rtrim($title, DIRECTORY_SEPARATOR),
+            $class
         );
 
     }
@@ -65,7 +70,7 @@ class mtmdImageView extends mtmdView {
             }
             $link = rtrim($link, DIRECTORY_SEPARATOR);
             $path .= $link.DIRECTORY_SEPARATOR;
-            $breadcrumb .= $this->renderBreadcrumbItem($path, $link, $active).'-&gt;';
+            $breadcrumb .= $this->renderBreadcrumbItem($path, $link, $active);
         }
         $tpl = file_get_contents('lib/mtmd/templates/breadcrumb.html.tpl');
         $breadcrumb = sprintf(
@@ -104,14 +109,14 @@ class mtmdImageView extends mtmdView {
         return sprintf(
             $tpl,
             $this->count,
+            basename($image->getFileName()),
             $image->getFileName(),
             $image->getThumbWidth(),
             $image->getThumbHeight(),
             $image->getThumbFileName(),
             basename($image->getFileName()),
             $image->getFileName(),
-            mtmdUtils::formatBytes($image->getSize()),
-            basename($image->getFileName())
+            mtmdUtils::formatBytes($image->getSize())
         );
 
     }

@@ -1,1 +1,1 @@
-<a href="?d=%s" class="%s">%s</a>
+<a href="?d=%s" class="%s">%s</a><span class="separator %s"> </span>

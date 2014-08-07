@@ -208,9 +208,9 @@ class mtmdImageApi {
      *
      * @return void
      */
-    public function resize(array $images)
+    public function resize()
     {
-        foreach ($images as $image) {
+        foreach ($this->getList() as $image) {
             if (!$image instanceof mtmdImage) {
                 continue;
             }

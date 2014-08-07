@@ -31,7 +31,7 @@ $images = $imageApi->getNewList();
 $imageApi
     ->setThumbWidth(320)
     ->setThumbHeight(260)
-    ->resize($images);
+    ->resize();
 
 $tpl = new mtmdImageView();
 
@@ -44,10 +44,14 @@ foreach ($imageApi->getList() as $item) {
     $tpl->addItem($item);
 }
 $imageTable = $tpl->renderOverview();
-$headline = 'Showing "'.str_replace($srcDefault.DIRECTORY_SEPARATOR, '', $srcFolder).'" ('.count($images).' items)';
+$showFolder = str_replace($srcDefault.DIRECTORY_SEPARATOR, '', $srcFolder);
+if ($showFolder == $srcDefault) {
+    $showFolder = 'Overview';
+}
+$headline = 'Showing "'.$showFolder.'" ('.count($images).' items)';
 
 $breadcrumb = $tpl->renderBreadCrumb(
     substr($imageApi->getFolderSource(), 2),
-    'All'
+    'Overview'
 );
 echo $tpl->render('<title>'.$headline.'</title>', '<h1>'.$headline.'</h1>'."\n".$breadcrumb."\n".$imageTable);

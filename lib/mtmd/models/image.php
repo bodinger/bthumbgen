@@ -83,7 +83,48 @@ class mtmdImage {
         $this->format    = $this->determineFormat();
 
         if ($this->getType() === IMAGETYPE_JPEG) {
-            $this->exifData = $this->readExifData();
+            $this->setExifData();
+        }
+
+    }
+
+
+    /**
+     * Sets EXIF orientation.
+     *
+     * @return void
+     */
+    private function setExifOrientation()
+    {
+        if (!array_key_exists('Orientation', $this->exifData)) {
+            $this->orientation = self::ORIENTATION_ORIGINAL;
+        }
+
+        switch ($this->exifData['Orientation']) {
+            case self::ORIENTATION_FLIP_HORIZONTAL:
+                $this->orientation = self::ORIENTATION_FLIP_HORIZONTAL;
+                break;
+            case self::ORIENTATION_ROTATE_180_LEFT:
+                $this->orientation = self::ORIENTATION_ROTATE_180_LEFT;
+                break;
+            case self::ORIENTATION_FLIP_VERTICAL:
+                $this->orientation = self::ORIENTATION_FLIP_VERTICAL;
+                break;
+            case self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT:
+                $this->orientation = self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT;
+                break;
+            case self::ORIENTATION_ROTATE_90_RIGHT:
+                $this->orientation = self::ORIENTATION_ROTATE_90_RIGHT;
+                break;
+            case self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT:
+                $this->orientation = self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT;
+                break;
+            case self::ORIENTATION_ROTATE_90_LEFT:
+                $this->orientation = self::ORIENTATION_ROTATE_90_LEFT;
+                break;
+            default:
+                $this->orientation = self::ORIENTATION_ORIGINAL;
+                break;
         }
 
     }
@@ -99,73 +140,38 @@ class mtmdImage {
     private function rotateOrFlip($imageResource)
     {
         $retResource = $imageResource;
-        if (!array_key_exists('Orientation', $this->exifData)) {
-            return $retResource;
-        }
 
-        switch ($this->exifData['Orientation']) {
+        switch ($this->getOrientation()) {
             case self::ORIENTATION_FLIP_HORIZONTAL:
-                $this->orientation = self::ORIENTATION_FLIP_HORIZONTAL;
                 $this->flip($imageResource);
                 break;
             case self::ORIENTATION_ROTATE_180_LEFT:
-                $this->orientation = self::ORIENTATION_ROTATE_180_LEFT;
                 $retResource = imagerotate($imageResource, 180, -1);
                 break;
             case self::ORIENTATION_FLIP_VERTICAL:
-                $this->orientation = self::ORIENTATION_FLIP_VERTICAL;
                 $this->flip($imageResource);
                 break;
             case self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT:
-                $this->orientation = self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT;
                 $this->flip($imageResource);
                 $retResource = imagerotate($imageResource, -90, -1);
                 break;
             case self::ORIENTATION_ROTATE_90_RIGHT:
-                $this->orientation = self::ORIENTATION_ROTATE_90_RIGHT;
                 $retResource = imagerotate($imageResource, -90, -1);
                 break;
             case self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT:
-                $this->orientation = self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT;
                 $this->flip($imageResource);
                 $retResource = imagerotate($imageResource, -90, -1);
                 break;
             case self::ORIENTATION_ROTATE_90_LEFT:
-                $this->orientation = self::ORIENTATION_ROTATE_90_LEFT;
                 $retResource = imagerotate($imageResource, 90, -1);
                 break;
         }
 
         if ($retResource === false) {
             return $imageResource;
-            #return $this->fixBrokenOrientation($imageResource);
         }
         return $retResource;
 
-    }
-
-
-    /**
-     * Fixes the orientation of some broken images. Those seem to be landscape but are portrait in reality.
-     *
-     * @param resource $imageResource
-     *
-     * @return resource
-     */
-    private function fixBrokenOrientation($imageResource) {
-        $oldWidth = $this->getWidth();
-        $oldHeight = $this->getHeight();
-        $oldThumbWidth = $this->getThumbWidth();
-        $oldThumbHeight = $this->getThumbHeight();
-        if ($oldWidth > $oldHeight) {
-            $this->width = $oldHeight;
-            $this->height = $oldWidth;
-            $this->orientation = self::ORIENTATION_ORIGINAL;
-            $this->format = self::PORTRAIT;
-            $this->thumbWidth = $oldThumbHeight;
-            $this->thumbHeight = $oldThumbWidth;
-        }
-        return $imageResource;
     }
 
 
@@ -222,9 +228,242 @@ class mtmdImage {
      *
      * @return array
      */
-    private function readExifData()
+    private function setExifData()
     {
-        return exif_read_data($this->getFileName());
+        $this->exifData = exif_read_data($this->getFileName());
+
+        if (array_key_exists('COMPUTED', $this->exifData)) {
+            $exifWidth = $this->getWidth();
+            if (array_key_exists('Width', $this->exifData['COMPUTED'])) {
+                $exifWidth = $this->exifData['COMPUTED']['Width'];
+            }
+            $exifHeight = $this->getHeight();
+            if (array_key_exists('Height', $this->exifData['COMPUTED'])) {
+                $exifWidth = $this->exifData['COMPUTED']['Height'];
+            }
+
+            if ($exifWidth != $this->getWidth() && $exifHeight != $this->getHeight()) {
+                $this->width = $exifWidth;
+                $this->height = $exifHeight;
+                $this->format = self::PORTRAIT;
+                if ($this->getWidth() > $this->getHeight()) {
+                    $this->format = self::LANDSCAPE;
+                }
+            }
+        }
+
+        $this->setExifOrientation();
+
+    }
+
+
+
+
+    /**
+     * Determine format landscape/portrait.
+     *
+     * @return int
+     */
+    public function determineFormat()
+    {
+        if ( $this->getWidth() > $this->getHeight() ) {
+            return self::LANDSCAPE;
+        }
+        return self::PORTRAIT;
+
+    }
+
+
+    /**
+     * Create a new image instance using proper imagecreatefrom method.
+     *
+     * @return resource
+     */
+    private function createImage()
+    {
+        switch($this->getType()) {
+            case IMAGETYPE_JPEG:
+                return imagecreatefromjpeg($this->getFileName());
+            case IMAGETYPE_GIF:
+                return imagecreatefromgif($this->getFileName());
+            case IMAGETYPE_PNG:
+                return imagecreatefrompng($this->getFileName());
+        }
+    }
+
+
+    /**
+     * Resize image using width/height and orientation information and saves it to cache folder.
+     *
+     * @param string  $dstPath
+     * @param integer $width
+     * @param integer $height
+     *
+     * @return void
+     */
+    public function resizeImage($dstPath, $width, $height)
+    {
+        $cacheFile = $dstPath.DIRECTORY_SEPARATOR.basename($this->getFileName());
+
+        // Handle regular measures.
+        $measures = $this->getNewMeasures($width, $height);
+
+        // Set thumbnail stuff.
+        $this->thumbFileName = $cacheFile;
+        $this->thumbWidth    = $measures[0];
+        $this->thumbHeight   = $measures[1];
+
+        // Correct possible orientation flaws (There seems to be a bug in some images regarding EXIF orientation marks).
+        $this->setMeasuresByOrientation();
+
+        // Once file is there don't generate it again.
+        if (file_exists($cacheFile)) {
+            return;
+        }
+
+        $oldFile = $this->createImage();
+        $oldFile = $this->rotateOrFlip($oldFile);
+
+        // In case of orientation change determine correct measures.
+        $newFile = imagecreatetruecolor($this->getThumbWidth(), $this->getThumbHeight());
+
+        imagecopyresampled(
+            $newFile,
+            $oldFile,
+            0,
+            0,
+            0,
+            0,
+            $this->getThumbWidth(),
+            $this->getThumbHeight(),
+            $this->getWidth(),
+            $this->getHeight()
+        );
+
+        $this->saveImage($newFile, $dstPath);
+        imagedestroy($oldFile);
+        imagedestroy($newFile);
+
+    }
+
+
+    /**
+     * Calculate new measures of thumbnail.
+     *
+     * @param integer $width
+     * @param integer $height
+     *
+     * @return array Array containing width/height
+     */
+    private function getNewMeasures($width, $height)
+    {
+        $newWidth = $width;
+        $newHeight = $height;
+        if ($this->getWidth() > $this->getHeight() && $height < $this->getHeight()) {
+            $newHeight = $this->getHeight() / ($this->getWidth() / $width);
+        } else if ($this->getWidth() < $this->getHeight() && $width < $this->getWidth()) {
+            $newWidth = $this->getWidth() / ($this->getHeight() / $height);
+        } else if ($this->getWidth() == $this->getHeight()) {
+            if ($width > $height) {
+                $newHeight = $width;
+            }
+        } else {
+            $newWidth = $this->getWidth();
+            $newHeight = $this->getHeight();
+        }
+
+        // Take format type into account.
+        if ($this->getFormat() === self::LANDSCAPE) {
+            if ($newWidth < $newHeight) {
+                return array(
+                    $newHeight,
+                    $newWidth
+                );
+            }
+        } else if ($this->getFormat() === self::PORTRAIT) {
+            if ($newHeight < $width) {
+                $newHeight = $width;
+                $newWidth = $this->getWidth() / ($this->getHeight() / $newHeight);
+            }
+        }
+
+        return array(
+            $newWidth,
+            $newHeight
+        );
+
+    }
+
+
+    /**
+     * Sets measures internally dependant to image orientation.
+     *
+     * @return void
+     */
+    private function setMeasuresByOrientation()
+    {
+        // Set to default.
+        $thumbWidth     = $this->getThumbWidth();
+        $thumbHeight    = $this->getThumbHeight();
+        $originalWidth  = $this->getWidth();
+        $originalHeight = $this->getHeight();
+
+        switch ($this->getOrientation()) {
+            // Orientations that do not need a measure change.
+            case self::ORIENTATION_FLIP_HORIZONTAL:
+            case self::ORIENTATION_ROTATE_180_LEFT:
+            case self::ORIENTATION_FLIP_VERTICAL:
+                break;
+            // Orientations that need flipping of measures.
+            case self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT:
+            case self::ORIENTATION_ROTATE_90_RIGHT:
+            case self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT:
+            case self::ORIENTATION_ROTATE_90_LEFT:
+                // Interchange measures.
+                $thumbWidth     = $this->getThumbHeight();
+                $thumbHeight    = $this->getThumbWidth();
+                $originalWidth  = $this->getHeight();
+                $originalHeight = $this->getWidth();
+                break;
+            // Original.
+            default:
+                break;
+        }
+
+        // Write to properties.
+        $this->thumbWidth  = $thumbWidth;
+        $this->thumbHeight = $thumbHeight;
+        $this->width       = $originalWidth;
+        $this->height      = $originalHeight;
+
+    }
+
+
+    /**
+     * Saves image instance as new file to destination/cache folder.
+     *
+     * @param resource $newFile
+     * @param string   $dstPath
+     *
+     * @return void
+     */
+    private function saveImage($newFile, $dstPath)
+    {
+        $dstPath = $dstPath.DIRECTORY_SEPARATOR.basename($this->getFileName());
+
+        switch($this->getType()) {
+            case IMAGETYPE_JPEG:
+                imagejpeg($newFile, $dstPath);
+                break;
+            case IMAGETYPE_GIF:
+                imagegif($newFile, $dstPath);
+                break;
+            case IMAGETYPE_PNG:
+                imagepng($newFile, $dstPath);
+                break;
+        }
+        return;
+
     }
 
 
@@ -300,204 +539,9 @@ class mtmdImage {
     }
 
 
-    /**
-     * Determine format landscape/portrait.
-     *
-     * @return int
-     */
-    public function determineFormat()
+    public function getOrientation()
     {
-        if ( $this->getWidth() > $this->getHeight() ) {
-            return self::LANDSCAPE;
-        }
-        return self::PORTRAIT;
-
-    }
-
-
-    /**
-     * Create a new image instance using proper imagecreatefrom method.
-     *
-     * @return resource
-     */
-    private function createImage()
-    {
-        switch($this->getType()) {
-            case IMAGETYPE_JPEG:
-                return imagecreatefromjpeg($this->getFileName());
-            case IMAGETYPE_GIF:
-                return imagecreatefromgif($this->getFileName());
-            case IMAGETYPE_PNG:
-                return imagecreatefrompng($this->getFileName());
-        }
-    }
-
-
-    /**
-     * Resize image using width/height and orientation information and saves it to cache folder.
-     *
-     * @param string  $dstPath
-     * @param integer $width
-     * @param integer $height
-     *
-     * @return void
-     */
-    public function resizeImage($dstPath, $width, $height)
-    {
-        $cacheFile = $dstPath.DIRECTORY_SEPARATOR.basename($this->getFileName());
-        $measures = $this->getNewMeasures($width, $height);
-
-        $this->thumbFileName = $cacheFile;
-        $this->thumbWidth    = $measures[0];
-        $this->thumbHeight   = $measures[1];
-
-        // Once file is there don't generate it again.
-        if (file_exists($cacheFile)) {
-            return;
-        }
-
-        $oldFile = $this->createImage();
-        $oldFile = $this->rotateOrFlip($oldFile);
-
-        // In case of orientation change determine correct measures.
-        $this->setMeasuresByOrientation();
-        $newFile = imagecreatetruecolor($this->getThumbWidth(), $this->getThumbHeight());
-        
-        imagecopyresampled(
-            $newFile,
-            $oldFile,
-            0,
-            0,
-            0,
-            0,
-            $this->getThumbWidth(),
-            $this->getThumbHeight(),
-            $this->getWidth(),
-            $this->getHeight()
-        );
-
-        $this->saveImage($newFile, $dstPath);
-
-    }
-
-
-    /**
-     * Calculate new measures of thumbnail.
-     *
-     * @param integer $width
-     * @param integer $height
-     *
-     * @return array Array containing width/height
-     */
-    private function getNewMeasures($width, $height)
-    {
-        $newWidth = $width;
-        $newHeight = $height;
-        if ($this->getWidth() > $this->getHeight() && $height < $this->getHeight()) {
-            $newHeight = $this->getHeight() / ($this->getWidth() / $width);
-        } else if ($this->getWidth() < $this->getHeight() && $width < $this->getWidth()) {
-            $newWidth = $this->getWidth() / ($this->getHeight() / $height);
-        } else if ($this->getWidth() == $this->getHeight()) {
-            if ($width > $height) {
-                $newHeight = $width;
-            }
-        } else {
-            $newWidth = $this->getWidth();
-            $newHeight = $this->getHeight();
-        }
-
-        // Take format type into account.
-        if ($this->getFormat() === self::LANDSCAPE) {
-            if ($newWidth < $newHeight) {
-                return array(
-                    $newHeight,
-                    $newWidth
-                );
-            }
-        } else if ($this->getFormat() === self::PORTRAIT) {
-            if ($newHeight < $width) {
-                $newHeight = $width;
-                $newWidth = $this->getWidth() / ($this->getHeight() / $newHeight);
-            }
-        }
-
-        return array(
-            $newWidth,
-            $newHeight
-        );
-
-    }
-
-
-    /**
-     * Sets measures internally dependant to image orientation.
-     *
-     * @return void
-     */
-    private function setMeasuresByOrientation()
-    {
-        // Set to default.
-        $thumbWidth     = $this->getThumbWidth();
-        $thumbHeight    = $this->getThumbHeight();
-        $originalWidth  = $this->getWidth();
-        $originalHeight = $this->getHeight();
-
-        switch ($this->orientation) {
-            // Orientations that do not need a measure change.
-            case self::ORIENTATION_FLIP_HORIZONTAL:
-            case self::ORIENTATION_ROTATE_180_LEFT:
-            case self::ORIENTATION_FLIP_VERTICAL:
-                break;
-            // Orientations that need flipping of measures.
-            case self::ORIENTATION_FLIP_VERTICAL_ROTATE_90_RIGHT:
-            case self::ORIENTATION_ROTATE_90_RIGHT:
-            case self::ORIENTATION_FLIP_HORIZONTAL_ROTATE_90_RIGHT:
-            case self::ORIENTATION_ROTATE_90_LEFT:
-                // Interchange measures.
-                $thumbWidth     = $this->getThumbHeight();
-                $thumbHeight    = $this->getThumbWidth();
-                $originalWidth  = $this->getHeight();
-                $originalHeight = $this->getWidth();
-                break;
-            // Original.
-            default:
-                break;
-        }
-
-        // Write to properties.
-        $this->thumbWidth  = $thumbWidth;
-        $this->thumbHeight = $thumbHeight;
-        $this->width       = $originalWidth;
-        $this->height      = $originalHeight;
-
-    }
-
-
-    /**
-     * Saves image instance as new file to destination/cache folder.
-     *
-     * @param resource $newFile
-     * @param string   $dstPath
-     *
-     * @return void
-     */
-    private function saveImage($newFile, $dstPath)
-    {
-        $dstPath = $dstPath.DIRECTORY_SEPARATOR.basename($this->getFileName());
-
-        switch($this->getType()) {
-            case IMAGETYPE_JPEG:
-                imagejpeg($newFile, $dstPath);
-                break;
-            case IMAGETYPE_GIF:
-                imagegif($newFile, $dstPath);
-                break;
-            case IMAGETYPE_PNG:
-                imagepng($newFile, $dstPath);
-                break;
-        }
-        return;
-
+        return $this->orientation;
     }
 
 

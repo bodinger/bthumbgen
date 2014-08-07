@@ -2,6 +2,9 @@ body {
     background-color: #000000;
     color: #ffffff;
     font-family: Arial, Verdana, Helvetica, Geneva, sans-serif;
+    margin: .1em;
+    padding: 1em;
+    border: 1px solid #ffffff;
 }
 
 h1 {
@@ -22,7 +25,7 @@ h1 {
 }
 
 .table .row .column {
-    /*float: left;*/
+    width: 24%;
 }
 
 .table .row .column .image {
@@ -34,23 +37,32 @@ h1 {
     border-width: 1px;
     margin: 1px 1px 1px 1px;
     border-style: solid;
-    border-color: #ffffff;
+    border-color: #cccccc;
     text-align: center;
+}
+
+.imagecontainer, .folder {
+    height: 380px;
+}
+
+.imagecontainer:hover, .folder:hover {
+    border-color: #ffffff;
+    background-color: #333333;
 }
 
 .imagecontainer span.number {
     clear: both;
-    font-size: 0.7em;
-    display: block;
+    font-size: 0.8em;
 }
 
 .imagecontainer span.title, .imagecontainer span.size {
-    font-size: 0.9em;
+    font-size: 0.8em;
 }
 
 a:link, a:active, a:visited, a:hover, a.download:link, a.download:active, a.download:visited, a.download:hover {
     color: #ff9999;
     font-weight: bold;
+    text-decoration: none;
 }
 
 .folder {
@@ -59,6 +71,7 @@ a:link, a:active, a:visited, a:hover, a.download:link, a.download:active, a.down
     border-style: solid;
     border-color: #ffffff;
     text-align: center;
+    vertical-align: middle;
 }
 
 .folder a {
@@ -70,17 +83,43 @@ a:link, a:active, a:visited, a:hover, a.download:link, a.download:active, a.down
 }
 
 .breadcrumb {
+    width: 100%;
+    height: 1.8em;
+    border: 1px solid #666666;
+    background-color: #333333;
+    text-align: center;
+    vertical-align: middle;
     display: block;
     clear: both;
+    margin: 0 0 0 0;
+    padding: .3em 0 0 .3em;
 }
 
 .breadcrumb a {
-    font-size: .8em;
+    color: #aaaaaa;
+    font-size: 1.1em;
+    text-decoration: underline;
+    display: block;
     float: left;
-    margin: 0px 10px 0px 0px;
+    font-weight: normal;
 }
 
-.breadcrumb a:active {
-    font-weight: bold;
-    color: #ff0000;
+.breadcrumb a.active {
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.breadcrumb span.separator {
+    margin: .7em .5em 0 .5em;
+    display: block;
+    float: left;
+    border-style: solid;
+    border-color: #666666;
+    border-width: 1px 0 0 0;
+    width: 10px;
+    height: 1px;
+}
+
+.breadcrumb span.separator.active {
+    display: none;
 }
